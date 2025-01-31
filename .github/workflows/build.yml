@@ -42,11 +42,11 @@ jobs:
         shell: powershell
         run: |
           pyinstaller --clean --noconfirm main.spec
-          Rename-Item -Path "dist\main.exe" -NewName "Sakura_Launcher_GUI_$('${{ github.sha }}'.Substring(0,7)).exe"
+          Rename-Item -Path "dist\Sakura_Launcher_GUI\main.exe" -NewName "Sakura_Launcher_GUI_$('${{ github.sha }}'.Substring(0,7)).exe"
 
       - name: Upload artifacts
         if: ${{ ( github.event_name == 'push' && github.ref == 'refs/heads/main' ) || github.event.inputs.create_release == 'true' }}
         uses: actions/upload-artifact@v4
         with:
           path: |
-            dist
+            dist\Sakura_Launcher_GUI
