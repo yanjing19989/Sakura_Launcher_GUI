@@ -81,7 +81,7 @@ class SakuraWSClient:
                 print(f"[WS] 尝试连接到WebSocket服务器: {uri}")
                 
                 async with aiohttp.ClientSession() as session:
-                    async with session.ws_connect(uri) as ws:
+                    async with session.ws_connect(uri, heartbeat=5.0, timeout=15.0) as ws:
                         self._ws = ws
                         print("[WS] 已成功连接到服务器")
                         try:
