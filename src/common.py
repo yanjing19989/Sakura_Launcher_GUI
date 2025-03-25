@@ -19,7 +19,8 @@ def get_self_path():
 
 CURRENT_DIR = get_self_path()
 ICON_FILE = "icon.ico"
-CLOUDFLARED = "cloudflared-windows-amd64.exe"
-SAKURA_LAUNCHER_GUI_VERSION = "v1.1.0-beta"
+GHPROXY_URL = "ghfast.top"
+SAKURA_LAUNCHER_GUI_VERSION = "v1.2.0-alpha"
+DEBUG_BUILD = False
 
 processes = []

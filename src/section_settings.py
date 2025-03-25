@@ -216,6 +216,7 @@ class SettingsSection(QFrame):
         model_sort_combo.currentTextChanged.connect(
             lambda text: SETTING.set_value("model_sort_option", text)
         )
+        
         llamacpp_path = UiLineEdit("可选，手动指定llama.cpp路径", SETTING.llamacpp_path)
         llamacpp_path.textChanged.connect(
             lambda text: SETTING.set_value("llamacpp_path", text)

@@ -20,7 +20,7 @@ from qfluentwidgets import (
     InfoBar,
 )
 
-from .common import CURRENT_DIR, get_resource_path
+from .common import CURRENT_DIR, get_resource_path, GHPROXY_URL
 from .llamacpp import *
 from .sakura import SAKURA_LIST, Sakura
 from .ui import *
@@ -74,7 +74,7 @@ class LoadDataThread(QThread):
 
         repo = "PiDanShouRouZhouXD/Sakura_Launcher_GUI"
         for link in [
-            f"https://ghp.ci/https://raw.githubusercontent.com/{repo}/refs/heads/main/{DATA_FILE}",
+            f"https://{GHPROXY_URL}/https://raw.githubusercontent.com/{repo}/refs/heads/main/{DATA_FILE}",
             f"https://cdn.jsdelivr.net/gh/{repo}@main/{DATA_FILE}",
             f"https://cdn.rawgit.com/{repo}/refs/heads/main/{DATA_FILE}",
             f"https://raw.githubusercontent.com/{repo}/refs/heads/main/{DATA_FILE}",
@@ -436,28 +436,10 @@ class DownloadSection(QFrame):
         filename = f"Sakura_Launcher_GUI_{version}.exe"
         url = f"https://github.com/PiDanShouRouZhouXD/Sakura_Launcher_GUI/releases/download/{version}/{filename}"
         if self.llamacpp_download_src == "GHProxy":
-            url = "https://ghp.ci/" + url
+            url = f"https://{GHPROXY_URL}/" + url
 
         task = DownloadTask(
             name="Sakura启动器",
-            url=url,
-            filename=filename,
-        )
-
-        def on_finish():
-            task.state = DownloadTaskState.SUCCESS
-            UiInfoBarSuccess(self, f"{task.name}下载成功")
-
-        self._start_download_task(task, on_finish=on_finish)
-
-    def start_download_cloudflared(self):
-        filename = "cloudflared-windows-amd64.exe"
-        url = "https://github.com/cloudflare/cloudflared/releases/download/2024.10.1/cloudflared-windows-amd64.exe"
-        if self.llamacpp_download_src == "GHProxy":
-            url = "https://ghp.ci/" + url
-
-        task = DownloadTask(
-            name="Cloudflared",
             url=url,
             filename=filename,
         )

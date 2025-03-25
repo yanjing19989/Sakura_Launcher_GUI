@@ -8,6 +8,9 @@ import zipfile
 
 from PySide6.QtCore import QObject, Signal
 
+from .common import GHPROXY_URL
+
+
 
 class Llamacpp:
     repo: str
@@ -32,7 +35,7 @@ class Llamacpp:
         self.require_cuda = require_cuda
         github_repo = f"https://github.com/{repo}/{filename}"
         self.download_links = {
-            "GHProxy": "https://ghp.ci/" + github_repo,
+            "GHProxy": f"https://{GHPROXY_URL}/" + github_repo,
             "GitHub": github_repo,
         }
 
@@ -46,7 +49,7 @@ class LlamacppList(QObject):
         "filename": "cudart-llama-bin-win-cu12.2.0-x64.zip",
         "download_links": {
             "GitHub": "https://github.com/ggerganov/llama.cpp/releases/download/b3926/cudart-llama-bin-win-cu12.2.0-x64.zip",
-            "GHProxy": "https://ghp.ci/https://github.com/ggerganov/llama.cpp/releases/download/b3926/cudart-llama-bin-win-cu12.2.0-x64.zip",
+            "GHProxy": f"https://{GHPROXY_URL}/https://github.com/ggerganov/llama.cpp/releases/download/b3926/cudart-llama-bin-win-cu12.2.0-x64.zip",
         },
     }
     _list: List[Llamacpp] = []
@@ -89,6 +92,18 @@ def unzip_llamacpp(folder: str, filename: str):
     if filename.endswith(".zip"):
         with zipfile.ZipFile(file_path, "r") as zip_ref:
             zip_ref.extractall(llama_folder)
+        # macOS build 中解压后产生的是'llama/build/bin'文件夹，需要将其中的所有内容移动到llama文件夹下
+        if sys.platform == "darwin":
+            bin_folder = os.path.join(llama_folder, "build", "bin")
+            for item in os.listdir(bin_folder):
+                src_path = os.path.join(bin_folder, item)
+                dst_path = os.path.join(llama_folder, item)
+                os.rename(src_path, dst_path)
+                # 添加执行权限 (755 = rwxr-xr-x)
+                os.chmod(dst_path, 0o755)
+            # 删除空文件夹
+            import shutil
+            shutil.rmtree(os.path.join(llama_folder, "build"))
     else:
         print(f"不支持的文件格式: {filename}")
         return

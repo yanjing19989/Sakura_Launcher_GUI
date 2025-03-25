@@ -52,14 +52,17 @@ if sys.platform == 'win32':
     exe = EXE(
         pyz,
         a.scripts,
+        a.binaries,
+        a.datas,
         [],
-        exclude_binaries=True,
-        name='main',
-        debug=False,
+        name='main_debug',
+        debug=True,
         bootloader_ignore_signals=False,
         strip=False,
         upx=True,
-        console=False,
+        upx_exclude=[],
+        runtime_tmpdir=None,
+        console=True,
         disable_windowed_traceback=False,
         argv_emulation=False,
         target_arch=None,
@@ -67,28 +70,18 @@ if sys.platform == 'win32':
         entitlements_file=None,
         icon=['icon.ico'],
     )
-
-    coll = COLLECT(
-        exe,
-        a.binaries,
-        a.datas,
-        strip=False,
-        upx=True,
-        upx_exclude=[],
-        name='Sakura_Launcher_GUI',
-    )
 elif sys.platform == 'darwin':
     exe = EXE(
         pyz,
         a.scripts,
         [],  # 不包含二进制文件
         exclude_binaries=True,
-        name='SakuraLauncher',
-        debug=False,
+        name='SakuraLauncher_debug',
+        debug=True,
         bootloader_ignore_signals=False,
         strip=False,
         upx=True,
-        console=False,
+        console=True,
         argv_emulation=True,
     )
     
@@ -96,12 +89,12 @@ elif sys.platform == 'darwin':
         exe,
         a.binaries,
         a.datas,
-        name='SakuraLauncher.app',
+        name='SakuraLauncher_debug.app',
         icon='icon.ico',
         bundle_identifier='com.sakura.launcher',
         info_plist={
             'NSHighResolutionCapable': True,
             'LSBackgroundOnly': False,
-            'CFBundleDisplayName': 'SakuraLauncher',
+            'CFBundleDisplayName': 'SakuraLauncher_debug',
         }
     )
