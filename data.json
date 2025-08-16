@@ -1,48 +1,48 @@
 {
     "llamacpp": [
         {
-            "repo": "ggerganov/llama.cpp/releases/download/b3923",
-            "filename": "llama-b3923-bin-win-cuda-cu12.2.0-x64.zip",
-            "version": "b3923-CUDA",
+            "repo": "ggml-org/llama.cpp/releases/download/b6178",
+            "filename": "llama-b6178-bin-win-cuda-12.4-x64.zip",
+            "version": "b6178-CUDA",
             "gpu": "Nvidia独显",
             "require_cuda": true
         },
         {
-            "repo": "PiDanShouRouZhouXD/Sakura_Launcher_GUI/releases/download/v0.0.3-alpha",
-            "filename": "llama-b3384-bin-win-rocm-avx2-x64.zip",
-            "version": "b3384-ROCm",
-            "gpu": "部分AMD独显",
+            "repo": "ggml-org/llama.cpp/releases/download/b6178",
+            "filename": "llama-b6178-bin-win-hip-radeon-x64.zip",
+            "version": "b6178-HIP",
+            "gpu": "大部分AMD独显",
+            "require_cuda": false
+        },
+        {
+            "repo": "ggml-org/llama.cpp/releases/download/b6178",
+            "filename": "llama-b6178-bin-macos-arm64.zip",
+            "version": "b6178-Apple-M",
+            "gpu": "苹果电脑M系列核显",
             "require_cuda": false
         },
         {
             "repo": "PiDanShouRouZhouXD/Sakura_Launcher_GUI/releases/download/v0.0.3-alpha",
             "filename": "llama-b3534-bin-win-rocm-avx512-x64.zip",
             "version": "b3534-ROCm-780m",
-            "gpu": "部分AMD核显",
+            "gpu": "部分AMD核显（不推荐）",
             "require_cuda": false
         },
         {
-            "repo": "ggerganov/llama.cpp/releases/download/b3923",
-            "filename": "llama-b3923-bin-win-vulkan-x64.zip",
-            "version": "b3923-Vulkan",
-            "gpu": "通用，不推荐",
-            "require_cuda": false
-        },
-        {
-            "repo": "ggerganov/llama.cpp/releases/download/b3923",
-            "filename": "llama-b3923-bin-macos-arm64.zip",
-            "version": "b3923-Apple-M",
-            "gpu": "苹果电脑M系列核显",
+            "repo": "ggml-org/llama.cpp/releases/download/b6178",
+            "filename": "llama-b6178-bin-win-vulkan-x64.zip",
+            "version": "b6178-Vulkan",
+            "gpu": "通用（不推荐）",
             "require_cuda": false
         }
     ],
     "sakura": [
         {
-            "repo": "GalTransl-7B-v2.6",
-            "filename": "GalTransl-7B-v2.6-IQ4_XS.gguf",
-            "sha256": "f1095c715bd37d6df1f674e86382723fe1fe45c3b4f9c80a4452bcf9128d3eca",
+            "repo": "SakuraLLM/Sakura-GalTransl-7B-v3.7",
+            "filename": "Sakura-Galtransl-7B-v3.7-IQ4_XS.gguf",
+            "sha256": "8f515bf4769f279a7fcf43e57446455a9d4de7f65b1bc9eddee76717e1ff7919",
             "minimal_gpu_memory_gib": 8,
-            "size": 4.29,
+            "size": 4.25,
             "recommended_np": {
                 "8": 2,
                 "10": 4,
@@ -50,7 +50,7 @@
                 "16": 16,
                 "24": 16
             },
-            "base_model_hf": "Qwen/Qwen1.5-7B",
+            "base_model_hf": "Qwen/Qwen2.5-7B",
             "bpw": 4.25,
             "config_cache": {
                 "hidden_size": 4096,
