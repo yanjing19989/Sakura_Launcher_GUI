@@ -83,6 +83,28 @@
             }
         },
         {
+            "repo": "Sakura-GalTransl-14B-v3.7",
+            "filename": "Sakura-Galtransl-14B-v3.7-IQ4_XS.gguf",
+            "sha256": "bc77adf25715c96ba3acb310103bcdb0ea18835fa24191c5c6d5853605bb827f",
+            "minimal_gpu_memory_gib": 10,
+            "size": 8.19,
+            "recommended_np": {
+                "10": 4,
+                "12": 12,
+                "16": 16,
+                "24": 16
+            },
+            "base_model_hf": "Qwen/Qwen2.5-14B",
+            "bpw": 4.25,
+            "config_cache": {
+                "hidden_size": 5120,
+                "num_attention_heads": 40,
+                "num_key_value_heads": 8,
+                "num_hidden_layers": 48,
+                "parameters": 14770033664.0
+            }
+        },
+        {
             "repo": "Sakura-14B-Qwen2.5-v1.0-GGUF",
             "filename": "sakura-14b-qwen2.5-v1.0-q4km.gguf",
             "sha256": "c87697cd9c7898464426cb7a1ec5e220755affaa08096766e8d20de1853c2063",
