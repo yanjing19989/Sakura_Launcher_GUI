@@ -23,7 +23,7 @@ class SakuraWSClient:
                 async with session.get(self.local_url + req["path"]) as response:
                     return await response.read(), response.status
             elif req.get("type") == "POST":
-                async with session.post(self.local_url + req["path"], data=req["data"]) as response:
+                async with session.post(self.local_url + req["path"], data=req["data"], headers={"Content-Type": "application/json"}) as response:
                     return await response.read(), response.status
         except aiohttp.ClientError as e:
             print(f"HTTP Client Error: {e}")
