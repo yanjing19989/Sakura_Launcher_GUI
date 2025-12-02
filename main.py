@@ -329,6 +329,8 @@ class MainWindow(MSFluentWindow):
 
         if section.flash_attention_check.isChecked():
             option_extra.append("-fa")
+            if version >= 6325:     # https://github.com/ggml-org/llama.cpp/releases/tag/b6325
+                option_extra.append("on")
         if section.no_mmap_check.isChecked():
             option_extra.append("--no-mmap")
 
