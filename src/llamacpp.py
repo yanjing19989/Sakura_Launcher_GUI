@@ -46,10 +46,10 @@ class LlamacppList(QObject):
         "GitHub",
     ]
     CUDART = {
-        "filename": "cudart-llama-bin-win-cu12.2.0-x64.zip",
+        "filename": "cudart-llama-bin-win-cuda-12.4-x64.zip",
         "download_links": {
-            "GitHub": "https://github.com/ggerganov/llama.cpp/releases/download/b3926/cudart-llama-bin-win-cu12.2.0-x64.zip",
-            "GHProxy": f"https://{GHPROXY_URL}/https://github.com/ggerganov/llama.cpp/releases/download/b3926/cudart-llama-bin-win-cu12.2.0-x64.zip",
+            "GitHub": "https://github.com/ggml-org/llama.cpp/releases/download/b6178/cudart-llama-bin-win-cuda-12.4-x64.zip",
+            "GHProxy": f"https://{GHPROXY_URL}/https://github.com/ggml-org/llama.cpp/releases/download/b6178/cudart-llama-bin-win-cuda-12.4-x64.zip",
         },
     }
     _list: List[Llamacpp] = []

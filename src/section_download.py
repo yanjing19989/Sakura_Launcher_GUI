@@ -229,7 +229,7 @@ class DownloadSection(QFrame):
 
         description = UiDescription(
             """
-        <p>您可以在这里下载不同版本的模型，模型会保存到启动器所在的目录。如果启动器无法下载，您也可以手动从<a href="https://hf-mirror.com/SakuraLLM/Sakura-14B-Qwen2beta-v0.9.2-GGUF/">Hugging Face镜像站</a>下载模型，将下载的gguf文件放到启动器所在文件夹下即可。</p>
+        <p>您可以在这里下载不同版本的模型，模型会保存到启动器所在的目录。如果启动器无法下载，您也可以手动从<a href="https://huggingface.co/SakuraLLM/">Hugging Face镜像站</a>下载模型，将下载的gguf文件放到启动器所在文件夹下即可。</p>
         <p>翻译Galgame推荐使用7B模型，12G以下显存可用。翻译小说推荐使用14B模型，需要12G及以上显存。</p>
         """
         )
@@ -287,15 +287,9 @@ class DownloadSection(QFrame):
         intel ARC用户请参考<a href="https://github.com/intel-analytics/ipex-llm/blob/main/docs/mddocs/Quickstart/llama_cpp_quickstart.md">这篇文档</a>来手动安装，在启动器指定软链接路径<b>可能</b>可以使用。
         Vulkan版本现在还不支持IQ系列的量化。
         </p>
-        <p><b>ROCm支持的AMD独显型号(感谢Sora维护)</b></p>
+        <p><b>HIP支持的AMD大多数独显型号</b></p>
         <ul>
-            <li>RX 7900 / 7800 / 7700系列显卡</li>
-            <li>RX 6900 / 6800 / 6700系列显卡</li>
-        </ul>
-        <p><b>ROCm-780m支持的AMD核显型号</b></p>
-        <ul>
-            <li>7840hs / 7940hs / 8840hs / 8845hs </li>
-            <li>理论上支持任何2022年后的AMD GPU，但要求CPU支持AVX512，且不对任何非780m显卡的可用性负责</li>
+            <li>RX 7900 / 7800 / 7700 / 6900 / 6800 / 6700系列显卡</li>
         </ul>
         """
         )

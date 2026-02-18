@@ -23,7 +23,7 @@ class SakuraWSClient:
                 async with session.get(self.local_url + req["path"]) as response:
                     return await response.read(), response.status
             elif req.get("type") == "POST":
-                async with session.post(self.local_url + req["path"], data=req["data"]) as response:
+                async with session.post(self.local_url + req["path"], data=req["data"], headers={"Content-Type": "application/json"}) as response:
                     return await response.read(), response.status
         except aiohttp.ClientError as e:
             print(f"HTTP Client Error: {e}")
@@ -75,13 +75,15 @@ class SakuraWSClient:
                 # 构建WebSocket URL
                 ws_url = self.worker_url.replace('http://', 'ws://').replace('https://', 'wss://')
                 uri = yarl.URL(f"{ws_url}/ws")
+                uri_with_token_removed = str(uri)
                 if self.token:
                     uri = uri.with_query({"token": self.token})
+                    uri_with_token_removed = str(uri).replace(self.token[4:], "****")
                 
-                print(f"[WS] 尝试连接到WebSocket服务器: {uri}")
+                print(f"[WS] 尝试连接到WebSocket服务器: {uri_with_token_removed}")
                 
                 async with aiohttp.ClientSession() as session:
-                    async with session.ws_connect(uri) as ws:
+                    async with session.ws_connect(uri, heartbeat=5.0, timeout=15.0) as ws:
                         self._ws = ws
                         print("[WS] 已成功连接到服务器")
                         try:
