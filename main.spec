@@ -58,7 +58,7 @@ if sys.platform == 'win32':
         debug=False,
         bootloader_ignore_signals=False,
         strip=False,
-        upx=True,
+        upx=False,
         console=False,
         disable_windowed_traceback=False,
         argv_emulation=False,
@@ -73,7 +73,7 @@ if sys.platform == 'win32':
         a.binaries,
         a.datas,
         strip=False,
-        upx=True,
+        upx=False,
         upx_exclude=[],
         name='Sakura_Launcher_GUI',
     )
@@ -87,7 +87,7 @@ elif sys.platform == 'darwin':
         debug=False,
         bootloader_ignore_signals=False,
         strip=False,
-        upx=True,
+        upx=False,
         console=False,
         argv_emulation=True,
     )

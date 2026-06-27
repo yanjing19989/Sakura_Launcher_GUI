@@ -66,14 +66,15 @@ class GPUDisplayHelper:
         return target_name in gpu_name
 
 class GPUManager:
-    def __init__(self):
+    def __init__(self, auto_detect=True):
         self.gpu_info_map: Dict[str, GPUInfo] = {}
         self.nvidia_gpus = []
         self.amd_gpus = []
         self.intel_gpus = []
         if DEBUG_BUILD:
             logging.info("GPU管理器初始化 (DEBUG模式)")
-        self.detect_gpus()
+        if auto_detect:
+            self.detect_gpus()
 
     @staticmethod
     def get_gpu_index_from_pci(pci_bus_id: str) -> int:

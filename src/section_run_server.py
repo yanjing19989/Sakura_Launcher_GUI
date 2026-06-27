@@ -1,7 +1,7 @@
 import logging
 import os
 import math
-from PySide6.QtCore import Qt
+from PySide6.QtCore import Qt, Signal, QThread
 from PySide6.QtWidgets import QVBoxLayout, QHBoxLayout, QLabel
 from qfluentwidgets import (
     ComboBox,
@@ -22,11 +22,76 @@ from .setting import SETTING
 from .ui import *
 
 
+def _collect_model_paths():
+    models = []
+    paths = SETTING.model_search_paths.split("\n")
+    search_paths = [CURRENT_DIR] + [path.strip() for path in paths if path.strip()]
+    logging.debug(f"搜索路径: {search_paths}")
+
+    for path in search_paths:
+        logging.debug(f"正在搜索路径: {path}")
+        if not os.path.exists(path):
+            logging.debug(f"路径不存在: {path}")
+            continue
+        if not os.path.isdir(path):
+            logging.debug(f"路径不是目录: {path}")
+            continue
+
+        logging.debug(f"路径是目录: {path}")
+        for root, dirs, files in os.walk(path):
+            logging.debug(f"正在搜索子目录: {root}")
+            logging.debug(f"文件列表: {files}")
+            for filename in files:
+                if filename.endswith(".gguf"):
+                    full_path = os.path.join(root, filename)
+                    logging.debug(f"找到模型文件: {full_path}")
+                    models.append(full_path)
+
+    logging.debug(f"找到的模型文件: {models}")
+
+    sort_option = SETTING.model_sort_option
+    try:
+        if sort_option == "修改时间":
+            models.sort(key=lambda x: os.path.getmtime(x), reverse=True)
+        elif sort_option == "文件名":
+            models.sort(key=lambda x: os.path.basename(x).lower())
+        elif sort_option == "文件大小":
+            models.sort(key=lambda x: os.path.getsize(x), reverse=True)
+    except OSError as e:
+        logging.warning(f"模型列表排序失败: {e}")
+
+    return [_shorten_model_path(path) for path in models]
+
+
+def _shorten_model_path(abspath):
+    if os.path.dirname(abspath) == CURRENT_DIR:
+        return os.path.basename(abspath)
+
+    abs_path = os.path.abspath(abspath)
+    if os.path.splitdrive(abspath)[0] == os.path.splitdrive(CURRENT_DIR)[0]:
+        rel_path = os.path.relpath(abspath, CURRENT_DIR)
+        return rel_path if len(rel_path) < len(abs_path) else abs_path
+    return abs_path
+
+
+class ModelSearchThread(QThread):
+    sig_finished = Signal(list)
+    sig_error = Signal(str)
+
+    def run(self):
+        try:
+            self.sig_finished.emit(_collect_model_paths())
+        except Exception as e:
+            logging.warning(f"刷新模型列表失败: {e}")
+            self.sig_error.emit(str(e))
+
+
 class RunServerSection(QFrame):
     def __init__(self, title, main_window, parent=None):
         super().__init__(parent)
         self.main_window = main_window
         self.setObjectName(title)
+        self._model_search_thread = None
 
         self._init_ui()
         self.refresh_models()
@@ -187,65 +252,33 @@ class RunServerSection(QFrame):
         layout.addWidget(self.refresh_model_button)
         return layout
 
-    def refresh_models(self):
+    def refresh_models(self, *_):
+        if self._model_search_thread and self._model_search_thread.isRunning():
+            return
+
+        self.refresh_model_button.setEnabled(False)
+        current_model = self.model_path.currentText()
+        thread = ModelSearchThread(self)
+        thread.sig_finished.connect(
+            lambda models: self._apply_refreshed_models(models, current_model)
+        )
+        thread.sig_error.connect(lambda _: self.refresh_model_button.setEnabled(True))
+        thread.finished.connect(lambda: setattr(self, "_model_search_thread", None))
+        thread.finished.connect(thread.deleteLater)
+        self._model_search_thread = thread
+        thread.start()
+
+    def _apply_refreshed_models(self, models, current_model):
+        current_text = self.model_path.currentText() or current_model
         self.model_path.clear()
-        models = []
-        paths = SETTING.model_search_paths.split("\n")
-        search_paths = [CURRENT_DIR] + [path.strip() for path in paths if path.strip()]
-        logging.debug(f"搜索路径: {search_paths}")
-        for path in search_paths:
-            logging.debug(f"正在搜索路径: {path}")
-            if os.path.exists(path):
-                logging.debug(f"路径存在: {path}")
-                if os.path.isdir(path):
-                    logging.debug(f"路径是目录: {path}")
-                    for root, dirs, files in os.walk(path):
-                        logging.debug(f"正在搜索子目录: {root}")
-                        logging.debug(f"文件列表: {files}")
-                        for f in files:
-                            if f.endswith(".gguf"):
-                                full_path = os.path.join(root, f)
-                                logging.debug(f"找到模型文件: {full_path}")
-                                models.append(full_path)
-                else:
-                    logging.debug(f"路径不是目录: {path}")
-            else:
-                logging.debug(f"路径不存在: {path}")
+        self.model_path.addItems(models)
 
-        logging.debug(f"找到的模型文件: {models}")
+        if current_text:
+            if self.model_path.findText(current_text) < 0:
+                self.model_path.addItem(current_text)
+            self.model_path.setCurrentText(current_text)
 
-        # 从设置中获取排序选项
-        sort_option = SETTING.model_sort_option
-
-        # 根据选择的排序方式对模型列表进行排序
-        if sort_option == "修改时间":
-            models.sort(key=lambda x: os.path.getmtime(x), reverse=True)
-        elif sort_option == "文件名":
-            models.sort(key=lambda x: os.path.basename(x).lower())
-        elif sort_option == "文件大小":
-            models.sort(key=lambda x: os.path.getsize(x), reverse=True)
-
-        models_shortest = []
-        for abspath in models:
-            # 检查文件是否在当前目录下（不在子目录中）
-            if os.path.dirname(abspath) == CURRENT_DIR:
-                # 如果在当前目录，使用文件名作为相对路径
-                models_shortest.append(os.path.basename(abspath))
-            else:
-                # 计算相对路径和绝对路径
-                abs_path = os.path.abspath(abspath)
-                # 只有在同一个盘符时才计算相对路径
-                if os.path.splitdrive(abspath)[0] == os.path.splitdrive(CURRENT_DIR)[0]:
-                    rel_path = os.path.relpath(abspath, CURRENT_DIR)
-                    # 选择更短的路径
-                    models_shortest.append(
-                        rel_path if len(rel_path) < len(abs_path) else abs_path
-                    )
-                else:
-                    # 不同盘符时使用绝对路径
-                    models_shortest.append(abs_path)
-
-        self.model_path.addItems(models_shortest)
+        self.refresh_model_button.setEnabled(True)
 
     def _create_gpu_selection_layout(self):
         self.gpu_combo = ComboBox(self)

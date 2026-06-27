@@ -3,8 +3,8 @@ import sys
 import os
 import subprocess
 import shutil
-from PySide6.QtCore import QTimer
-from PySide6.QtWidgets import QApplication, QAbstractScrollArea
+from PySide6.QtCore import QTimer, QThread, Signal
+from PySide6.QtWidgets import QApplication, QAbstractScrollArea, QFrame, QVBoxLayout
 from PySide6.QtGui import QIcon, QColor, QFont
 from qfluentwidgets import (
     MessageBox,
@@ -17,15 +17,9 @@ from qfluentwidgets import (
 )
 
 from src.common import *
-from src.llamacpp import get_llamacpp_version
 from src.gpu import GPUManager
 from src.section_run_server import RunServerSection
-from src.section_download import DownloadSection
-from src.section_share import CFShareSection
-from src.section_about import AboutSection
-from src.section_settings import SettingsSection
 from src.setting import *
-from src.ui import *
 
 logging.basicConfig(level=os.environ.get("LOGLEVEL", "INFO").upper())
 
@@ -33,10 +27,52 @@ logging.basicConfig(level=os.environ.get("LOGLEVEL", "INFO").upper())
 os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
 
 
+class GPUDetectionThread(QThread):
+    sig_finished = Signal(object)
+    sig_error = Signal(str)
+
+    def run(self):
+        try:
+            self.sig_finished.emit(GPUManager(auto_detect=True))
+        except Exception as e:
+            logging.warning(f"后台检测GPU失败: {e}")
+            self.sig_error.emit(str(e))
+
+
+class LazySection(QFrame):
+    def __init__(self, title, factory, parent=None):
+        super().__init__(parent)
+        self.setObjectName(title.replace(" ", "-"))
+        self._factory = factory
+        self._widget = None
+        self._layout = QVBoxLayout(self)
+        self._layout.setContentsMargins(0, 0, 0, 0)
+
+    @property
+    def is_loaded(self):
+        return self._widget is not None
+
+    def ensure_loaded(self):
+        if self._widget is None:
+            self._widget = self._factory()
+            self._layout.addWidget(self._widget)
+        return self._widget
+
+    def showEvent(self, event):
+        self.ensure_loaded()
+        super().showEvent(event)
+
+    def __getattr__(self, name):
+        if name.startswith("_"):
+            raise AttributeError(name)
+        return getattr(self.ensure_loaded(), name)
+
+
 class MainWindow(MSFluentWindow):
     def __init__(self):
         super().__init__()
-        self.gpu_manager = GPUManager()
+        self.gpu_manager = GPUManager(auto_detect=False)
+        self._gpu_detection_thread = None
         self.init_navigation()
         self.init_window()
         self.setMinimumSize(600, 700)
@@ -52,12 +88,27 @@ class MainWindow(MSFluentWindow):
             lambda widget, popOut=True: setCurrentWidget(widget, popOut)
         )
 
+    def start_gpu_detection(self):
+        if self._gpu_detection_thread and self._gpu_detection_thread.isRunning():
+            return
+
+        thread = GPUDetectionThread(self)
+        thread.sig_finished.connect(self._apply_detected_gpus)
+        thread.finished.connect(lambda: setattr(self, "_gpu_detection_thread", None))
+        thread.finished.connect(thread.deleteLater)
+        self._gpu_detection_thread = thread
+        thread.start()
+
+    def _apply_detected_gpus(self, gpu_manager):
+        self.gpu_manager = gpu_manager
+        self.run_server_section.refresh_gpus(keep_selected=True)
+
     def init_navigation(self):
         self.run_server_section = RunServerSection("启动", self)
-        self.dowload_section = DownloadSection("下载")
-        self.cf_share_section = CFShareSection("共享", self)
-        self.settings_section = SettingsSection("设置")
-        self.about_section = AboutSection("关于")
+        self.dowload_section = LazySection("下载", self._create_download_section)
+        self.cf_share_section = LazySection("共享", self._create_share_section)
+        self.settings_section = LazySection("设置", self._create_settings_section)
+        self.about_section = LazySection("关于", self._create_about_section)
 
         self.addSubInterface(self.run_server_section, FIF.COMMAND_PROMPT, "启动")
         self.addSubInterface(self.dowload_section, FIF.DOWNLOAD, "下载")
@@ -72,6 +123,30 @@ class MainWindow(MSFluentWindow):
 
         self.navigationInterface.setCurrentItem("启动")
 
+    def _create_download_section(self):
+        from src.section_download import DownloadSection
+
+        return DownloadSection("下载")
+
+    def _create_share_section(self):
+        from src.section_share import CFShareSection
+
+        return CFShareSection("共享", self)
+
+    def _create_settings_section(self):
+        from src.section_settings import SettingsSection
+
+        section = SettingsSection("设置")
+        section.sig_need_update.connect(
+            lambda version: self.dowload_section.start_download_launcher(version)
+        )
+        return section
+
+    def _create_about_section(self):
+        from src.section_about import AboutSection
+
+        return AboutSection("关于")
+
     def init_window(self):
         self.run_server_section.run_button.clicked.connect(self.run_llamacpp_server)
         self.run_server_section.run_and_share_button.clicked.connect(
@@ -79,10 +154,6 @@ class MainWindow(MSFluentWindow):
         )
         self.run_server_section.benchmark_button.clicked.connect(
             self.run_llamacpp_batch_bench
-        )
-
-        self.settings_section.sig_need_update.connect(
-            self.dowload_section.start_download_launcher
         )
 
         self.setStyleSheet(
@@ -249,6 +320,8 @@ class MainWindow(MSFluentWindow):
         return True
 
     def _run_llamacpp(self, executable):
+        from src.llamacpp import get_llamacpp_version
+
         section = self.run_server_section
 
         llamacpp_override = section.llamacpp_override.text().strip()
@@ -416,7 +489,11 @@ class MainWindow(MSFluentWindow):
     def terminate_all_processes(self):
         print("Terminating all processes...")
         try:
-            self.cf_share_section.stop_cf_share()
+            if (
+                not isinstance(self.cf_share_section, LazySection)
+                or self.cf_share_section.is_loaded
+            ):
+                self.cf_share_section.stop_cf_share()
         except AttributeError:
             print("Warning: CFShareSection not properly initialized")
         for proc in processes:
@@ -481,4 +558,5 @@ if __name__ == "__main__":
     app.setFont(better_font)
     window = MainWindow()
     window.show()
+    QTimer.singleShot(0, window.start_gpu_detection)
     sys.exit(app.exec())
