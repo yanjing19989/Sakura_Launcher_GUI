@@ -429,14 +429,7 @@ class RunServerSection(QFrame):
             if preset["name"] == preset_name:
                 config = preset["config"]
 
-                self.command_template.setPlainText(config.get("command_template", ""))
-                if self.command_template == "":
-                    cmd1 = config.get("custom_command", "")
-                    cmd2 = config.get("custom_command_append", "")
-                    if cmd1 != "":
-                        self.command_template = "%cmd_raw% " + cmd1
-                    elif cmd2 != "":
-                        self.command_template = "%cmd% " + cmd2
+                self.command_template.setPlainText(self._get_command_template(config))
 
                 self.gpu_layers_spinbox.setValue(config.get("gpu_layers", 200))
                 self.model_path.setCurrentText(config.get("model_path", ""))
@@ -470,6 +463,28 @@ class RunServerSection(QFrame):
                 self.llamacpp_override.setText(config.get("llamacpp_override", ""))
                 self.update_context_per_thread()
                 break
+
+    def _get_command_template(self, config):
+        command_template = config.get("command_template")
+        if command_template:
+            return command_template
+
+        custom_command = config.get("custom_command", "")
+        custom_command_append = config.get("custom_command_append", "")
+
+        if custom_command:
+            if (
+                "%cmd%" in custom_command
+                or "%cmd_raw%" in custom_command
+                or "custom_command_append" not in config
+            ):
+                return custom_command
+            return "%cmd_raw% " + custom_command
+
+        if custom_command_append:
+            return "%cmd% " + custom_command_append
+
+        return ""
 
     def toggle_advanced_settings(self):
         new_state = not self.menu_advance.isVisible()
